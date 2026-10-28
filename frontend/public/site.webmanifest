@@ -1,0 +1,9 @@
+{
+  "name": "CodeDarpan",
+  "short_name": "CodeDarpan",
+  "description": "Understand the code behind the code.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f2ebdd",
+  "theme_color": "#f2ebdd"
+}

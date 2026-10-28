@@ -1,0 +1,29 @@
+# CodeDarpan analyzer (Node.js + TypeScript + Express)
+
+## Run
+
+From the repository root, use `pnpm install`, `pnpm dev` (API :3001 and Vite :3000), `pnpm test`, `pnpm typecheck`, and `pnpm build`. Vite proxies `/api` to the API during development. Production needs a same-origin reverse proxy. The API listens on `PORT` (default 3001).
+
+## API and analysis
+
+`POST /api/analyses` accepts JSON `{ repositoryUrl, ref? }` for public GitHub repositories or multipart `file` for ZIP. At present, each analysis is computed synchronously; the response is returned after it reaches `ready`, while `/events` emits a terminal SSE notification. The frontend documents all routes in `frontend/src/lib/api.ts`.
+
+The parser supports JavaScript, JSX, TypeScript and TSX through Babel. It extracts import/export paths, declaration symbols, cyclomatic estimate and call expressions. Relative imports resolve by exact path, common extensions, or `index` candidates. Import edges point importer → dependency. Declared functions are graph nodes; call edges follow Babel lexical bindings for local declarations and named/default imported functions with a resolved source. This avoids same-name global matching, but dynamic imports, member/namespace calls, dependency-package calls, complex re-exports and runtime dispatch remain unresolved. Searchable symbols focus on declarations.
+
+Token count is a lexical approximation (identifiers, numeric literals, operators and punctuation; comments/whitespace excluded), not model tokenization. Complexity is `1 +` if/loop/catch/ternary/logical branches and switch cases after the first. These metrics are estimates, not formal proof of runtime behavior.
+
+ZIP safeguards: 25 MiB upload, 100 MiB total expanded source, 5,000 accepted source files, 2 MiB per file, path traversal/symlink rejection, and ignored dependency/build folders. GitHub intake uses public API and codeload; rate limits and network failures surface as errors.
+
+Public GitHub issue lookup retrieves up to 100 open issues and filters the requested labels; exact path/filename mentions are returned as explainable file matches. PR analysis obtains public changed-file lists and walks reverse import relationships. These are structural hints, not predictions of runtime breakage.
+
+## Persistence, limitations and privacy
+
+SQLite (`better-sqlite3`) persists analysis metadata and source snapshots so run IDs survive process restarts. Default database path is `data/codedarpan.sqlite` relative to the API process working directory; override with `CODEDARPAN_DB_PATH`. Records expire after seven days by default at server startup; configure `CODEDARPAN_RETENTION_DAYS`. Set an appropriate writable persistent volume and retention policy in deployment. There is no auth, multi-tenant isolation, private repository support, or per-user access control; do not expose the API publicly without adding these protections and a reviewed privacy/retention policy. Request/body and archive limits are enforced.
+
+For GitHub analyses, health computes per-file additions/deletions across the analyzed revision and up to four first-parent commits (one request per examined commit, bounded to five). It is a recent-history measure, not lifetime churn. Rate limits, missing revisions and capped commit file lists surface as unavailable/null counts, never guessed zero. ZIP history is inherently unavailable. No AI model is used. Optional account endpoints provide self-service signup/login, scrypt password hashes, signed 12-hour same-site HttpOnly sessions and owner-scoped analysis access. Local development defaults to a shared local workspace; Compose requires authentication. Signup currently lacks verification/recovery. Public repository source persists in SQLite until expiry/cleanup; operators must inform users and secure/delete that data. Privacy/terms drafts need owner details and legal review before public launch.
+
+## Benchmark
+
+Run the API (`pnpm dev`) and in another terminal execute `node backend/scripts/benchmark.mjs`. Configure `CODEDARPAN_API`, `BENCH_FILES`, and `BENCH_FANOUT` if desired. It synthesizes a deterministic TypeScript ZIP and records intake+analysis response, server analysis, graph fetch and counts. It does not measure browser Cytoscape paint/frame rate.
+
+A local run on 2026-10-28 with Node 22.23.4 and a 6-vCPU Intel Xeon Processor @ 2.50GHz used 500 files, fanout 5, 133,290-byte archive and returned 500 nodes/2,500 edges. Three consecutive warm runs had median server analysis 225 ms, median upload+analysis response 321 ms, median graph fetch 14 ms and median end-to-graph 339 ms (ranges respectively 215–242, 295–344, 13–16 and 315–362 ms). These are environment-specific, local synthetic measurements, not a general guarantee. No browser frame-rate result is claimed.

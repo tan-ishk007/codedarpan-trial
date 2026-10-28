@@ -1,0 +1,29 @@
+services:
+  codedarpan:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: codedarpan:local
+    init: true
+    restart: unless-stopped
+    ports:
+      - "${HOST_PORT:-3000}:3000"
+    environment:
+      NODE_ENV: production
+      PORT: "3000"
+      BACKEND_PORT: "3001"
+      CODEDARPAN_DB_PATH: /data/codedarpan.sqlite
+      CODEDARPAN_RETENTION_DAYS: ${CODEDARPAN_RETENTION_DAYS:-7}
+      CODEDARPAN_REQUIRE_AUTH: ${CODEDARPAN_REQUIRE_AUTH:-true}
+    volumes:
+      - codedarpan-data:/data
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      start_period: 20s
+      retries: 3
+    stop_grace_period: 10s
+
+volumes:
+  codedarpan-data:

@@ -1,0 +1,12 @@
+{
+  "routes": [
+    { "path": "/", "title": "CodeDarpan | Understand the code behind the code" },
+    { "path": "/workspace", "title": "CodeDarpan Atlas | Explore repository structure" },
+    { "path": "/workspace/explore", "title": "Explore | CodeDarpan Atlas" },
+    { "path": "/workspace/diagnose", "title": "Diagnose | CodeDarpan Atlas" },
+    { "path": "/workspace/onboard", "title": "Onboard | CodeDarpan Atlas" },
+    { "path": "/workspace/impact", "title": "Impact | CodeDarpan Atlas" },
+    { "path": "/privacy", "title": "Privacy draft | CodeDarpan" },
+    { "path": "/terms", "title": "Terms draft | CodeDarpan" }
+  ]
+}

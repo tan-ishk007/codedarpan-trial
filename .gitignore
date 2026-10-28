@@ -1,0 +1,27 @@
+# Dependencies and package-manager artifacts
+node_modules/
+.pnpm-store/
+
+# Build output and test artifacts
+**/dist/
+**/coverage/
+*.tsbuildinfo
+
+# Local environment and secrets
+.env
+.env.*
+!.env.example
+
+# Logs and temporary files
+*.log
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+.DS_Store
+Thumbs.db
+
+# Local analyzer persistence
+**/data/*.sqlite
+**/data/*.sqlite-shm
+**/data/*.sqlite-wal
+*.db

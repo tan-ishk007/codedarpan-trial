@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Cytoscape graph benchmark</title>
+  <style>
+    :root { color-scheme: light; font: 14px/1.45 system-ui, sans-serif; color: #172033; background: #f3f5f8; }
+    body { margin: 0; padding: 18px; }
+    header { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-bottom: 12px; }
+    h1 { font-size: 19px; margin: 0 auto 0 0; }
+    button { border: 1px solid #c6ceda; border-radius: 6px; background: white; padding: 8px 12px; cursor: pointer; }
+    button:hover { background: #edf3fb; }
+    #status { color: #46556d; }
+    #cy { height: min(72vh, 760px); min-height: 420px; border: 1px solid #cbd3df; border-radius: 8px; background: white; }
+    pre { white-space: pre-wrap; overflow-wrap: anywhere; background: #101827; color: #dbeafe; padding: 14px; border-radius: 8px; min-height: 60px; }
+    .hint { color: #58677d; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Cytoscape.js browser benchmark</h1>
+    <button id="rerun">Rebuild graph</button>
+    <button id="pan">Measure pan</button>
+    <button id="zoom">Measure zoom</button>
+    <button id="select">Measure selection</button>
+    <button id="fps">Sample 3s frame rate</button>
+    <span id="status">Loading…</span>
+  </header>
+  <div id="cy" aria-label="Interactive graph benchmark"></div>
+  <p class="hint">Use drag to pan, wheel to zoom, and click nodes to select. Interaction timings below are action-call elapsed times, not FPS or frame-time measurements.</p>
+  <pre id="results">Waiting for graph creation…</pre>
+  <script type="module" src="./graph-benchmark.mjs"></script>
+</body>
+</html>

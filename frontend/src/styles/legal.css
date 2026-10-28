@@ -1,0 +1,26 @@
+.legal-page { min-height: 100vh; padding: 0 24px 50px; background: var(--parchment); }
+.legal-page__header, .legal-page__content, .legal-page__related { width: min(760px, 100%); margin-inline: auto; }
+.legal-page__header { padding: 27px 0 25px; border-bottom: 1px solid var(--border); }
+.legal-page__brand { display: inline-block; margin-bottom: 42px; color: var(--ink); font: 400 25px/1 var(--display); }
+.legal-page__eyebrow, .not-found-page__eyebrow { margin: 0 0 10px; color: var(--oxblood); font: 9px var(--mono); letter-spacing: .12em; text-transform: uppercase; }
+.legal-page__title, .not-found-page__title { margin: 0; font: 400 clamp(42px, 6vw, 62px)/1 var(--display); letter-spacing: -.025em; }
+.legal-page__intro { max-width: 610px; margin: 13px 0 0; color: var(--muted); font-size: 13px; line-height: 1.8; }
+.legal-page__draft-notice { display: inline-block; margin: 18px 0 0; padding: 8px 10px; border: 1px solid rgba(143,48,48,.3); background: #f7eeea; color: #71302d; font-size: 10px; }
+.legal-page__content { padding: 12px 0; }
+.legal-page__section { padding: 20px 0; border-bottom: 1px solid var(--border); }
+.legal-page__section h2 { margin: 0 0 9px; font: 400 26px/1.1 var(--display); }
+.legal-page__section p { margin: 8px 0; color: var(--soft-ink); font-size: 12px; line-height: 1.8; }
+.legal-page__section a { color: var(--oxblood); text-decoration: underline; text-underline-offset: 2px; }
+.legal-page__related { display: flex; gap: 22px; padding-top: 18px; color: var(--muted); font-size: 11px; }
+.legal-page__related a:hover { color: var(--oxblood); }
+.not-found-page { display: flex; min-height: 100vh; flex-direction: column; align-items: flex-start; justify-content: center; width: min(760px, calc(100% - 40px)); margin: 0 auto; }
+.not-found-page__title { font-size: clamp(48px, 7vw, 76px); }
+.not-found-page__message { margin: 14px 0 20px; color: var(--muted); font-size: 14px; }
+.not-found-page__home-link { display: inline-flex; padding: 11px 14px; border: 1px solid var(--ink); background: var(--ink); color: var(--paper); font-size: 11px; }
+.not-found-page__home-link:hover { border-color: var(--oxblood); background: var(--oxblood); }
+@media (max-width: 600px) {
+  .legal-page { padding-inline: 18px; }
+  .legal-page__brand { margin-bottom: 30px; }
+  .legal-page__section h2 { font-size: 23px; }
+  .legal-page__related { gap: 17px; }
+}

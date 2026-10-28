@@ -1,0 +1,17 @@
+{
+  "name": "codedarpan-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "packageManager": "pnpm@11.25.0",
+  "scripts": {
+    "dev": "concurrently -k -n api,web -c blue,green \"pnpm --filter @codedarpan/backend dev\" \"pnpm --filter @codedarpan/frontend dev\"",
+    "build": "pnpm --filter @codedarpan/backend build && pnpm --filter @codedarpan/frontend build",
+    "typecheck": "pnpm --filter @codedarpan/backend typecheck && pnpm --filter @codedarpan/frontend typecheck",
+    "test": "pnpm --filter @codedarpan/backend test && pnpm --filter @codedarpan/frontend test",
+    "preview": "pnpm --filter @codedarpan/frontend preview",
+    "start": "pnpm --filter @codedarpan/backend start"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.0"
+  }
+}
