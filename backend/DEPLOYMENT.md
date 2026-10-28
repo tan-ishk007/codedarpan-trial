@@ -56,6 +56,10 @@ Keep backup archives private and encrypted at rest. To restore, stop the service
 | `CODEDARPAN_RETENTION_DAYS` | `7` | Age in days after which stored analyses are removed at backend startup. |
 | `CODEDARPAN_REQUIRE_AUTH` | `true` in Compose | Require account bearer token for all analysis endpoints. |
 | `GITHUB_TOKEN` | unset | Optional least-privilege token for authenticated GitHub API requests; inject as a runtime secret and never commit it. |
+| `GOOGLE_CLIENT_ID` | unset | Google OAuth web-client ID; enables Google sign-in when paired with the other Google settings. |
+| `GOOGLE_CLIENT_SECRET` | unset | Google OAuth client secret; inject as a runtime secret and never commit it. |
+| `GOOGLE_REDIRECT_URI` | unset | Exact registered callback URI, normally `https://your-domain.example/api/auth/google/callback`. |
+| `CODEDARPAN_PUBLIC_HTTPS` | `false` | Set to `true` for public HTTPS or embedded previews so auth cookies use `SameSite=None; Secure`. |
 
 `CODEDARPAN_DB_PATH`, container `PORT`, and internal `BACKEND_PORT` are set by Compose to `/data/codedarpan.sqlite`, `3000`, and `3001`. Keep the database path under the mounted `/data` directory to preserve it across container recreation.
 

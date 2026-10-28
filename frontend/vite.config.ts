@@ -5,7 +5,7 @@ export default defineConfig({
   plugins: [react()],
   server: {
     host: '0.0.0.0',
-    allowedHosts: ['3000-i7c1btki1zs7qsll6p8sf-e5320aa0.sg2.manus.computer'],
+    allowedHosts: ['3000-i7c1btki1zs7qsll6p8sf-e5320aa0.sg2.manus.computer', '3000-iuiah8f11x343l0l6g2n4-ee2b88c8.sg2.manus.computer'],
     port: 3000,
     strictPort: true,
     proxy: { '/api': { target: 'http://127.0.0.1:3001', changeOrigin: true } },

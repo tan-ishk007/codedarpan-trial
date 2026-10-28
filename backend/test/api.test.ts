@@ -30,6 +30,12 @@ describe('CodeDarpan API integration', () => {
     await ready();
   },10000);
   afterAll(() => { server?.kill('SIGTERM'); });
+  it('reports live analyzer service health as JSON', async () => {
+    const response=await fetch(`http://127.0.0.1:${port}/api/health`);
+    expect(response.status).toBe(200);
+    expect(response.headers.get('content-type')).toMatch(/application\/json/i);
+    expect(await response.json()).toEqual(expect.objectContaining({status:'ok',service:'CodeDarpan analyzer'}));
+  });
   it('analyzes a ZIP and returns resolved imports, source, and AST metrics', async () => {
     const archive=await zip({'src/main.ts':"import { helper } from './helper';\nexport function main(x: number) { if (x) return helper(); return 0; }\n",'src/helper.ts':'export function helper(){ return 1 }','src/unrelated.ts':'export function helper(){ return 99 }'});
     const form=new FormData();form.append('file',new Blob([archive]),'fixture.zip');
@@ -41,6 +47,10 @@ describe('CodeDarpan API integration', () => {
     expect(graph.nodes).toContainEqual(expect.objectContaining({id:'fn:src%2Fmain.ts:2:main',kind:'function',path:'src/main.ts'}));
     expect(graph.edges).toContainEqual(expect.objectContaining({source:'fn:src%2Fmain.ts:2:main',target:'fn:src%2Fhelper.ts:1:helper',type:'call',confidence:'medium',resolution:'lexical-binding'}));
     expect(graph.edges.filter((edge:any)=>edge.type==='call')).toHaveLength(1);
+    const summary=await (await fetch(`http://127.0.0.1:${port}/api/analyses/${runId}`)).json() as any;
+    expect(summary.nodeCount).toBe(graph.nodes.length);
+    expect(summary.edgeCount).toBe(graph.edges.length);
+    expect(summary.summary.graphCounts).toEqual({files:3,symbols:3,imports:1,calls:1});
     const file=await (await fetch(`http://127.0.0.1:${port}/api/analyses/${runId}/files/src%2Fmain.ts`)).json() as any;
     expect(file.source).toContain('export function main');expect(file.imports).toEqual(['src/helper.ts']);expect(file.complexity).toBe(2);expect(file.warnings).toEqual([]);
   });
@@ -51,6 +61,38 @@ describe('CodeDarpan API integration', () => {
     const form=new FormData();form.append('file',new Blob([archive]),'unsafe.zip');
     const response=await fetch(`http://127.0.0.1:${port}/api/analyses`,{method:'POST',body:form});
     expect(response.status).toBe(400);expect((await response.json()).message).toMatch(/relative path|Unsafe ZIP path/);
+  });
+  it('returns a clear client error for a non-GitHub repository URL', async () => {
+    const response=await fetch(`http://127.0.0.1:${port}/api/analyses`,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({repositoryUrl:'https://example.com/acme/project'})});
+    expect(response.status).toBe(400);expect((await response.json()).message).toMatch(/Only public github\.com repositories/);
+  });
+  it('reports an unsupported-only ZIP instead of creating an empty analysis', async () => {
+    const archive=await zip({'README.md':'Documentation only.','index.html':'<h1>No supported source</h1>'});
+    const form=new FormData();form.append('file',new Blob([archive]),'unsupported.zip');
+    const response=await fetch(`http://127.0.0.1:${port}/api/analyses`,{method:'POST',body:form});
+    expect(response.status).toBe(422);expect((await response.json()).message).toMatch(/No supported source files/);
+  });
+  it('ingests mixed-language repositories with honest heuristic-parser warnings', async () => {
+    const archive=await zip({
+      'pkg/util.py':'def helper(value):\n    if value:\n        return value\n    return 0\n',
+      'pkg/main.py':'from pkg.util import helper\ndef run():\n    return helper(1)\n',
+      'cmd/main.go':'package main\nimport "fmt"\nfunc main() { fmt.Println("ok") }\n',
+    });
+    const form=new FormData();form.append('file',new Blob([archive]),'mixed.zip');
+    const submitted=await fetch(`http://127.0.0.1:${port}/api/analyses`,{method:'POST',body:form});
+    expect(submitted.status).toBe(202);const {runId}=await submitted.json() as {runId:string};
+    const graph=await (await fetch(`http://127.0.0.1:${port}/api/analyses/${runId}/graph`)).json() as any;
+    expect(graph.nodes.filter((n:any)=>n.kind==='file')).toHaveLength(3);
+    expect(graph.nodes).toContainEqual(expect.objectContaining({path:'pkg/main.py',language:'Python'}));
+    expect(graph.edges).toContainEqual(expect.objectContaining({source:'pkg/main.py',target:'pkg/util.py',type:'import'}));
+    const source=await (await fetch(`http://127.0.0.1:${port}/api/analyses/${runId}/files/pkg%2Fmain.py`)).json() as any;
+    expect(source.warnings[0]).toMatch(/Heuristic Python parser/);
+  });
+  it('rejects a ZIP entry above the expanded per-file limit', async () => {
+    const archive=await zip({'src/large.ts':'x'.repeat(2*1024*1024+1)});
+    const form=new FormData();form.append('file',new Blob([archive]),'large.zip');
+    const response=await fetch(`http://127.0.0.1:${port}/api/analyses`,{method:'POST',body:form});
+    expect(response.status).toBe(400);expect((await response.json()).message).toMatch(/file-count or expanded-size limits/);
   });
   it('isolates analyses by account and returns evidence-backed onboarding and honest churn status', async () => {
     const email=`${randomUUID()}@example.test`;

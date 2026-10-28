@@ -1,44 +1,235 @@
 # CodeDarpan
 
-CodeDarpan is a React + TypeScript application with a Node.js/Express analyzer for public GitHub repositories and ZIP uploads. It parses JavaScript, JSX, TypeScript and TSX with Babel, resolves static relative imports, and serves a normalized dependency graph, source, search results, structural health evidence, onboarding suggestions and impact estimates.
+CodeDarpan is an evidence-first repository intelligence engine. It accepts a public GitHub repository URL or ZIP archive, parses the source it can support, resolves static relationships, and presents the result as an interactive atlas with source context, architectural health evidence, onboarding guidance and structural impact estimates.
+
+The landing experience is a cinematic royal atlas: ivory surfaces, brass relationship paths, oxblood accents, architectural graph modules and reversible scroll-driven transitions. The application includes email authentication and a production-style Google OAuth authorization-code flow.
+
+## What is included
+
+- Public GitHub URL and ZIP archive ingestion.
+- Babel AST analysis for JavaScript, JSX, TypeScript and TSX.
+- Deterministic heuristic parsing for Python, Go, Rust, Java, C/C++, Ruby and PHP, with visible caveats instead of overstated AST certainty.
+- Static import/dependency relationships, function nodes, circular dependency detection and architectural health evidence.
+- Explore, Diagnose, Onboard and Impact views.
+- Source inspection, search, relationship tracing and selected-node context.
+- Email registration/login with account-scoped analysis access.
+- Google OAuth with state validation, HttpOnly state cookie, verified-email requirement and account reuse/linking.
+- Framer Motion landing narrative with reversible scroll animation and reduced-motion support.
+- SQLite persistence with configurable retention.
+- Docker Compose deployment with a same-origin frontend/API gateway.
+
+## Requirements
+
+- Node.js 22 or newer.
+- pnpm 11.25.0, as declared by `package.json`.
+- For Docker deployment: Docker Engine and Compose v2.
+- A Google Cloud project only if Google sign-in is required.
+
+## Local development
+
+From the repository root:
+
+```sh
+pnpm install
+cp backend/.env.example backend/.env
+pnpm dev
+```
+
+The development frontend runs at `http://localhost:3000`; the Express API runs at `http://localhost:3001`. Vite proxies `/api` requests to the API, so the browser uses the frontend origin.
+
+Useful commands:
+
+```sh
+pnpm typecheck   # TypeScript checks for backend and frontend
+pnpm test        # Backend and frontend Vitest suites
+pnpm build       # Production backend/frontend build and prerendering
+pnpm preview     # Preview the frontend production build
+pnpm start       # Start the backend build
+```
+
+The API health check is:
+
+```sh
+curl http://localhost:3001/api/health
+```
+
+A successful health response confirms API reachability. It does not guarantee that a particular GitHub request or repository submission will succeed.
+
+## Google OAuth setup
+
+Google sign-in is intentionally disabled until all three Google variables are configured. Email authentication still works without Google credentials.
+
+### 1. Create a Google OAuth client
+
+1. Open [Google Cloud Console](https://console.cloud.google.com/).
+2. Create or select a project.
+3. Configure the OAuth consent screen under **Google Auth Platform**. For a competition/demo deployment, choose the appropriate external or internal audience and add the app name, support email and developer contact email.
+4. Add the scopes `openid`, `email` and `profile` if Google asks for scope configuration. CodeDarpan only uses the verified email/profile identity needed to create or reuse an account.
+5. Create an OAuth client under **Credentials → Create credentials → OAuth client ID**.
+6. Select **Web application**.
+7. Add the exact callback URL for every environment:
+
+   Local development:
+
+   ```text
+   http://localhost:3000/api/auth/google/callback
+   ```
+
+   Production behind the same-origin gateway:
+
+   ```text
+   https://YOUR_DOMAIN/api/auth/google/callback
+   ```
+
+   Do not add a trailing slash unless it is also present in `GOOGLE_REDIRECT_URI`. Google requires an exact match.
+
+8. Copy the generated Client ID and Client Secret. Never commit the secret or place it in frontend code.
+
+### 2. Configure the backend
+
+Edit `backend/.env`:
+
+```dotenv
+GOOGLE_CLIENT_ID=your-client-id.apps.googleusercontent.com
+GOOGLE_CLIENT_SECRET=your-google-client-secret
+GOOGLE_REDIRECT_URI=http://localhost:3000/api/auth/google/callback
+
+# false for local HTTP; true for public HTTPS
+CODEDARPAN_PUBLIC_HTTPS=false
+
+# Keep authentication enabled for a real deployment
+CODEDARPAN_REQUIRE_AUTH=true
+CODEDARPAN_TOKEN_SECRET=replace-with-a-long-random-secret
+
+# Optional GitHub API token for higher rate limits
+GITHUB_TOKEN=
+```
+
+For production, use the production callback and enable secure cookies:
+
+```dotenv
+GOOGLE_REDIRECT_URI=https://YOUR_DOMAIN/api/auth/google/callback
+CODEDARPAN_PUBLIC_HTTPS=true
+```
+
+Restart the backend after changing `.env`:
+
+```sh
+pnpm dev
+```
+
+Visit `http://localhost:3000/account`. The Google button appears when this endpoint returns `enabled: true`:
+
+```sh
+curl http://localhost:3001/api/auth/google/status
+```
+
+Expected response:
+
+```json
+{"enabled":true}
+```
+
+The callback flow is: CodeDarpan creates a short-lived state value, stores it in an HttpOnly cookie, redirects to Google, exchanges the returned code server-side, verifies the Google email, creates or reuses the CodeDarpan account, sets the CodeDarpan session cookie and returns to `/account?oauth=success`.
+
+## Docker Compose deployment
+
+The recommended production shape is the included single-origin container. It serves the built frontend and forwards `/api` to the internal Express API. SQLite is stored in the named `codedarpan-data` volume.
+
+```sh
+export HOST_PORT=3000
+export CODEDARPAN_RETENTION_DAYS=7
+
+docker compose -f compose.yaml config
+docker compose -f compose.yaml up --build -d
+docker compose -f compose.yaml ps
+curl --fail http://127.0.0.1:${HOST_PORT}/api/health
+```
+
+Open `http://127.0.0.1:${HOST_PORT}/`. For a public HTTPS deployment, place a trusted TLS reverse proxy in front of the container, configure the public domain in Google Cloud, and set the following runtime secrets/environment variables:
+
+```dotenv
+GOOGLE_CLIENT_ID=...
+GOOGLE_CLIENT_SECRET=...
+GOOGLE_REDIRECT_URI=https://YOUR_DOMAIN/api/auth/google/callback
+CODEDARPAN_PUBLIC_HTTPS=true
+CODEDARPAN_REQUIRE_AUTH=true
+CODEDARPAN_TOKEN_SECRET=a-long-random-secret
+CODEDARPAN_RETENTION_DAYS=7
+```
+
+Do not expose the internal backend port separately. Route the browser through the single public origin so auth cookies and `/api` requests remain same-origin.
+
+Useful Docker commands:
+
+```sh
+docker compose -f compose.yaml logs -f codedarpan
+docker compose -f compose.yaml restart codedarpan
+docker compose -f compose.yaml down
+```
+
+`docker compose down -v` deletes the named database volume and all persisted analyses. Use it only when intentionally destroying stored data.
+
+## Configuration reference
+
+| Variable | Purpose |
+| --- | --- |
+| `GOOGLE_CLIENT_ID` | Google OAuth web client ID. |
+| `GOOGLE_CLIENT_SECRET` | Google OAuth client secret; keep server-side only. |
+| `GOOGLE_REDIRECT_URI` | Exact callback registered in Google Cloud. |
+| `CODEDARPAN_PUBLIC_HTTPS` | Set `true` for public HTTPS or embedded previews so secure auth-cookie settings are used. |
+| `CODEDARPAN_REQUIRE_AUTH` | Require login before analysis endpoints; keep `true` for deployment. |
+| `CODEDARPAN_TOKEN_SECRET` | Secret used to sign sessions. Use a long random value. |
+| `GITHUB_TOKEN` | Optional runtime GitHub token for authenticated API requests and higher limits. |
+| `CODEDARPAN_DB_PATH` | SQLite path; keep it on persistent storage in production. |
+| `CODEDARPAN_RETENTION_DAYS` | Analysis retention period; default is seven days in Compose. |
+| `PORT` | Backend port when running outside Compose; default is 3001. |
 
 ## Repository layout
 
 ```text
 codedarpan/
-├── backend/                 # Express API, Babel parsing and analysis routes
-├── frontend/                # React + TypeScript + Vite application
-├── package.json             # Workspace scripts
-├── pnpm-lock.yaml           # Shared dependency lockfile
-└── pnpm-workspace.yaml      # Frontend and backend workspace declaration
+├── backend/                 # Express API, OAuth, SQLite and analysis pipeline
+├── frontend/                # React, Vite, Framer Motion and Cytoscape UI
+├── compose.yaml             # Single-origin Docker deployment
+├── Dockerfile               # Node 22 production image
+├── package.json              # Workspace scripts
+├── pnpm-lock.yaml            # Locked dependency graph
+└── pnpm-workspace.yaml       # Workspace declaration
 ```
 
-## Requirements and local setup
+## Analysis scope and honest limitations
 
-Use Node.js 22+ and pnpm 11.25.0. From the repository root:
+JavaScript-family files receive the AST-grade Babel pipeline. Other supported languages are ingested through deterministic heuristic adapters and carry an explicit warning. The graph is a static structural map, not a complete runtime call graph: dynamic imports, package exports, aliases, runtime dispatch and unresolved relationships can remain unknown. Complexity and token counts are estimates. Impact and churn evidence is bounded and should not be treated as a prediction of every runtime failure.
 
-```sh
-pnpm install
-pnpm dev          # API on :3001 and frontend on :3000; Vite proxies /api
-pnpm typecheck
-pnpm test
-pnpm build
+Only public GitHub repositories are supported by the frontend. Private repository access is not implemented. Uploaded archives and persisted analysis payloads may contain proprietary source code, so operators must protect the host, database, backups and logs and must publish accurate privacy/retention terms before launch.
+
+Account signup currently has no email verification or password-reset flow. For a public deployment, consider an identity-aware proxy, invite policy, rate limits, TLS termination and reviewed legal/privacy documents.
+
+## Verification
+
+The final handoff was verified with:
+
+```text
+pnpm typecheck   passed
+pnpm test        55 tests passed
+pnpm build       passed, including Vite build and prerendering
 ```
 
-The API can be started alone with `pnpm --filter @codedarpan/backend dev`. Set `PORT` to change its port. Production requires a same-origin reverse proxy to route `/api` to the API and other paths to the built frontend. Set `CODEDARPAN_PUBLIC_ORIGIN` to the actual HTTPS origin only when building for a public deployment.
+## Troubleshooting
 
-## Analysis conventions
+**Google button is missing:** check `GET /api/auth/google/status`, confirm all three `GOOGLE_*` values are present in the backend environment, then restart the backend.
 
-Imports are directed from importer to dependency. The graph includes file and declared function nodes. Function calls use Babel lexical bindings, local declaration identity, and matching imported/exported function symbols to avoid linking ambiguous same-name functions; dynamic/member/dependency-package calls and unresolved imports remain omitted, so it is not a complete runtime call graph. File token count is a lexical approximation rather than a model tokenizer. Complexity is a cyclomatic estimate, convention `1 + if/loops/catch/ternary/non-default switch cases/logical operators`. The graph's confidence and caveats are static-analysis evidence, not runtime predictions.
+**Google says redirect URI mismatch:** copy the callback URL exactly from `GOOGLE_REDIRECT_URI` into the Google OAuth client's authorized redirect URIs. Check protocol, host, port, path and trailing slash.
 
-ZIP constraints and limitations are described in [`backend/README.md`](backend/README.md). Analysis snapshots persist in SQLite for seven days by default; configure `CODEDARPAN_DB_PATH` and `CODEDARPAN_RETENTION_DAYS`. GitHub health computes bounded churn over up to five recent first-parent commits; ZIP and unavailable history stay unknown, not zero. Public GitHub issue lookup, tailored onboarding, function-level static call edges, and PR changed-file impact are implemented with documented limitations and structural estimates. Account sessions and per-user analysis isolation are available; self-service signup currently has no email verification/password reset. Private GitHub repositories are unsupported. Operators must define deployment retention and privacy controls.
+**OAuth state is invalid or expired:** start the flow again in the same browser origin. Do not mix `localhost` and `127.0.0.1`; browser cookies are origin-specific.
 
-## Deployment and performance checks
+**The frontend cannot reach the API:** confirm the backend is listening on port 3001, Vite is running on port 3000, and `/api/health` responds.
 
-The single-origin container configuration is in [`Dockerfile`](Dockerfile), [`compose.yaml`](compose.yaml), and [`backend/DEPLOYMENT.md`](backend/DEPLOYMENT.md). Local gateway/API smoke tests passed in this environment. A Docker image build was not verified because no Docker/Podman daemon is installed here. The isolated Cytoscape harness is [`frontend/scripts/graph-benchmark.html`](frontend/scripts/graph-benchmark.html). A single headless Chrome run rendered 600 nodes/3,000 edges in about 960 ms; action timing is available, but this environment could not produce a credible sustained FPS/paint-complete measure. Do not treat one render sample as a deployment performance guarantee.
+**Authentication works locally but not in production:** use the public HTTPS callback, set `CODEDARPAN_PUBLIC_HTTPS=true`, terminate TLS at the reverse proxy, and keep frontend/API traffic on one origin.
 
-## Tools and external services
+**Analysis is unavailable:** inspect the returned error and backend logs. The interface intentionally does not replace failed live analysis with sample data.
 
-The application uses React, React DOM, React Router, Vite, TypeScript, Cytoscape.js, highlight.js, lucide-react, Express, Babel parser/traverse/types, Multer, yauzl, and uuid. GitHub public REST API and codeload are used for public repository metadata, snapshots and PR file lists. No AI model is used. Review package manifests and licenses before distribution.
+## License and launch review
 
-The UI includes a demo atlas explicitly labeled as sample data; live-analysis errors do not fall back to demo content. Privacy/terms pages are drafts and need operator details and legal review before public deployment.
+Review package licenses and confirm the project’s intended license before distribution. Replace the draft Privacy and Terms pages with deployment-specific, professionally reviewed documents before public launch.

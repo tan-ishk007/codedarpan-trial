@@ -6,6 +6,7 @@ import { ApiError, getAnalysis, getFile, getGraph, getHealth, getImpact, getIssu
 import { AtlasGraph, type GraphEdge, type GraphNode } from '../components/graph/AtlasGraph';
 import { FileTree } from '../components/explorer/FileTree';
 import { Brand } from '../components/Brand';
+import { AnalyzerHealthStatus } from '../components/AnalyzerHealthStatus';
 import { StatusNotice } from '../components/StatusNotice';
 import { HealthEvidencePanel } from '../components/evidence/HealthEvidencePanel';
 import { ImpactEvidencePanel } from '../components/evidence/ImpactEvidencePanel';
@@ -585,6 +586,7 @@ export default function WorkspacePage() {
           {revision && <code>{revision}</code>}
         </div>
         <div className={`workspace-status${demoMode ? ' is-demo' : ''}`}><span className="status-led" />{demoMode ? 'DEMO DATA' : status ?? (workspaceLoading ? 'CONNECTING' : 'STATUS UNAVAILABLE')}</div>
+        <AnalyzerHealthStatus className="workspace-health" />
         <a className="workspace-home-link" href="/" aria-label="Return to CodeDarpan home"><ArrowLeft size={15} /> Home</a>
       </header>
 

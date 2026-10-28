@@ -255,6 +255,15 @@ function validateHealth(payload: ApiPayload): void {
   if (value.historyAvailable !== undefined && typeof value.historyAvailable !== 'boolean') unsupportedShape('health.historyAvailable must be a boolean when present');
 }
 
+function validateServiceHealth(payload: ApiPayload): void {
+  const value = payloadRecord(payload, 'GET /api/health');
+  if (!hasNonEmptyString(value.status)) unsupportedShape('GET /api/health.status must be a non-empty string');
+  if (value.service !== undefined && !hasNonEmptyString(value.service)) unsupportedShape('GET /api/health.service must be a non-empty string when present');
+  if (value.activeAnalyses !== undefined && (typeof value.activeAnalyses !== 'number' || !Number.isFinite(value.activeAnalyses))) {
+    unsupportedShape('GET /api/health.activeAnalyses must be a number when present');
+  }
+}
+
 function validateOnboarding(payload: ApiPayload): void {
   const value = payloadRecord(payload, 'GET /api/analyses/:runId/onboarding');
   const routeKeys = ['steps', 'route', 'path', 'items'];
@@ -288,6 +297,16 @@ function validatePrImpact(payload: ApiPayload): void {
 }
 
 const analysisPath = (runId: string): string => `/api/analyses/${encodeURIComponent(runId)}`;
+
+export type ServiceHealthResponse = ApiPayload & {
+  status: string;
+  service?: string;
+  activeAnalyses?: number;
+};
+
+export function getServiceHealth(options: ApiRequestOptions = {}): Promise<ServiceHealthResponse> {
+  return requestWithSchema<ServiceHealthResponse>('/api/health', options, validateServiceHealth);
+}
 
 export function submitGitHubAnalysis(input: GitHubAnalysisRequest): Promise<AnalysisSubmissionResponse> {
   return requestWithSchema('/api/analyses', {

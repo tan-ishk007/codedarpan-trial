@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { AnalyzerHealthStatus } from '../components/AnalyzerHealthStatus';
 
 function LegalLayout({
   eyebrow,
@@ -25,6 +26,10 @@ function LegalLayout({
         </p>
       </header>
       <div className="legal-page__content">{children}</div>
+      <aside className="legal-page__service-status" aria-label="Analyzer service availability">
+        <span>Analyzer API status</span>
+        <AnalyzerHealthStatus />
+      </aside>
       <nav className="legal-page__related" aria-label="Legal pages">
         <a href="/">Home</a>
         <a href="/privacy">Privacy</a>

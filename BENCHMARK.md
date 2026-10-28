@@ -12,3 +12,17 @@ The API ran locally at `http://127.0.0.1:3201`. The final run indexed 500 files,
 | Total through graph fetch | 579 ms |
 
 This is a local synthetic benchmark and does not establish cold-start, real repository, network download, peak-memory, or browser-rendering performance. In particular, no FPS/60 FPS claim is made. The current result is a measured API target result, not a claim that every repository will complete under five seconds. To reproduce, start `pnpm dev` and run `node backend/scripts/benchmark.mjs`; configure `BENCH_FILES` and `BENCH_FANOUT` for a different deterministic dataset. The script prints exact counters and timings. Timing boundaries are defined in the script; ZIP upload+analysis response includes local HTTP upload, extraction, and analysis work, while server analysis is measured from source ingestion through AST/graph metric construction.
+
+## Recheck run with process memory sampling
+
+**Run:** 2026-10-28 (UTC) · **Runtime:** Node.js v22.23.4 · **Host exposed to process:** 6 vCPUs, Intel Xeon Processor @ 2.50 GHz, 23 GiB total memory · **Dataset:** deterministic ZIP with 500 TypeScript files, 5 relative imports per file, 2,500 expected import edges, 133,290 compressed bytes.
+
+| Measurement | Result |
+| --- | ---: |
+| Server analysis (parse/index/resolve/metrics) | 364 ms |
+| ZIP upload through analysis response | 517 ms |
+| Fetch normalized graph payload | 15 ms |
+| Total through graph fetch | 539 ms |
+| Analyzer process peak RSS | 180.6 MiB |
+
+The analyzer process RSS was sampled from `/proc/<pid>/status` every 10 ms during the benchmark (80 samples). A shorter transient peak could be missed. This run produced 500 file records, 1,000 graph nodes (file and function nodes) and 2,500 import edges. The parse/analysis result met the under-five-second target for this synthetic case only. No sustained browser FPS or 60 FPS result was measured; the graph-rendering target remains unverified. These values are single-run, environment-specific measurements, not deployment guarantees.

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { EvidenceGroup, type EvidenceRecord, formatEvidence } from './EvidencePrimitives';
 import type { GraphNode } from '../graph/AtlasGraph';
+import { ChurnComplexityHeatmap } from './ChurnComplexityHeatmap';
 
 type FilterKey = 'all' | 'findings' | 'factors' | 'hotspots' | 'cycles' | 'churnComplexity';
 const groups: { key: Exclude<FilterKey, 'all'>; title: string }[] = [
@@ -32,6 +33,7 @@ export function HealthEvidencePanel({ value, nodes, onSelectNode }: { value: Evi
         {availableGroups.map(({ key, title }) => <button key={key} type="button" aria-pressed={filter === key} onClick={() => setFilter(key)}>{title}</button>)}
       </div>}
       <div className="health-evidence-groups">
+        <ChurnComplexityHeatmap value={value.churnComplexity} nodes={nodes} onSelectNode={onSelectNode} />
         {availableGroups.filter(({ key }) => filter === 'all' || filter === key).map(({ key, title }) => <EvidenceGroup key={key} title={title} value={value[key]} nodes={nodes} onSelectNode={onSelectNode} />)}
         {availableGroups.length === 0 && <p className="evidence-empty">No recognized health evidence groups were returned.</p>}
       </div>

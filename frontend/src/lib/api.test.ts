@@ -3,6 +3,7 @@ import {
   ApiError,
   getGraph,
   getHealth,
+  getServiceHealth,
   getOnboarding,
   searchAnalysis,
   submitGitHubAnalysis,
@@ -20,6 +21,26 @@ afterEach(() => {
 });
 
 describe('CodeDarpan API client', () => {
+  it('checks the same-origin analyzer health endpoint and validates its response', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(jsonResponse({ status: 'ok', service: 'CodeDarpan analyzer', activeAnalyses: 2 }));
+    vi.stubGlobal('fetch', fetchMock);
+
+    await expect(getServiceHealth()).resolves.toEqual({ status: 'ok', service: 'CodeDarpan analyzer', activeAnalyses: 2 });
+    expect(fetchMock).toHaveBeenCalledWith('/api/health', expect.objectContaining({ headers: expect.any(Headers) }));
+  });
+
+  it('rejects a health response that cannot confirm service status', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(jsonResponse({ service: 'CodeDarpan analyzer' })));
+
+    await expect(getServiceHealth()).rejects.toMatchObject({ kind: 'unsupported-response' });
+  });
+
+  it('preserves an explicit API error when the health endpoint is unavailable', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(jsonResponse({ message: 'Analyzer unavailable' }, 503)));
+
+    await expect(getServiceHealth()).rejects.toMatchObject({ kind: 'http', status: 503, message: 'Analyzer unavailable' });
+  });
+
   it('submits a GitHub repository as the documented JSON body', async () => {
     const fetchMock = vi.fn().mockResolvedValue(jsonResponse({ runId: 'run-1' }));
     vi.stubGlobal('fetch', fetchMock);
