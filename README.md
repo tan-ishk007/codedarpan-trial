@@ -19,7 +19,7 @@ Use Node.js 22+ and pnpm 11.25.0. From the repository root:
 
 ```sh
 pnpm install
-pnpm dev
+pnpm dev          # API on :3001 and frontend on :3000; Vite proxies /api
 pnpm typecheck
 pnpm test
 pnpm build

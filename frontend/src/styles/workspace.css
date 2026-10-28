@@ -83,6 +83,11 @@
 .atlas-toolbar-label { display: inline-flex; align-items: center; gap: 7px; color: #d9cfbd; font: 8px var(--mono); letter-spacing: .1em; }
 .atlas-toolbar-label svg { color: var(--brass); }
 .atlas-actions { display: flex; align-items: center; gap: 8px; }
+.atlas-filter-row { display: flex; flex-wrap: wrap; align-items: center; gap: 7px; padding: 7px 10px; border-bottom: 1px solid rgba(242,235,221,.14); background: #2b2721; color: #c6beaf; font: 8px var(--mono); }
+.atlas-filter-row label { display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; }
+.atlas-filter-row select { max-width: 120px; padding: 4px 5px; border: 1px solid rgba(242,235,221,.28); border-radius: 0; background: #211e1a; color: var(--paper); font: 8px var(--mono); }
+.clear-graph-filters { padding: 4px 6px; border: 1px solid rgba(242,235,221,.28); background: transparent; color: #d5b381; font: 8px var(--mono); cursor: pointer; }
+.clear-graph-filters:hover { border-color: var(--paper); color: var(--paper); }
 .atlas-actions .icon-button { width: 27px; height: 27px; border-color: rgba(242,235,221,.24); color: var(--paper); }
 .depth-control { display: flex; align-items: center; gap: 6px; color: #c6beaf; font: 8px var(--mono); }
 .depth-control select { width: 43px; padding: 4px; border: 1px solid rgba(242,235,221,.24); border-radius: 0; background: #211e1a; color: var(--paper); font: 9px var(--mono); }

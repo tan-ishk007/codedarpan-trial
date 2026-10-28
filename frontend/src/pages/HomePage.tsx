@@ -162,7 +162,7 @@ export default function HomePage() {
               {notice && <StatusNotice kind={notice.kind} title={notice.title}>{notice.message}</StatusNotice>}
               <div className="sample-entry"><span>Want to see the atlas first?</span><button type="button" onClick={() => openSample('explore')}>Explore sample atlas <ArrowUpRight size={15} /></button></div>
             </div>
-            <p className="hero-note"><ShieldAlert size={14} /> Live analysis requires a compatible analyzer service.</p>
+            <p className="hero-note"><ShieldAlert size={14} /> Live analysis uses the connected analyzer; outages and unsupported inputs remain explicit.</p>
           </div>
 
           <div className="hero-art-wrap">
@@ -209,7 +209,7 @@ export default function HomePage() {
         </section>
       </main>
 
-      <footer className="site-footer"><Brand compact /><p>Understand the code behind the code.</p><nav aria-label="Footer navigation"><a href="/privacy">Privacy draft</a><a href="/terms">Terms draft</a></nav><span className="footer-boundary">Frontend only · analyzer service not included</span></footer>
+      <footer className="site-footer"><Brand compact /><p>Understand the code behind the code.</p><nav aria-label="Footer navigation"><a href="/privacy">Privacy draft</a><a href="/terms">Terms draft</a></nav><span className="footer-boundary">Live analyzer connected · public repositories and ZIP archives</span></footer>
     </div>
   );
 }

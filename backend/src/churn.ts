@@ -1,3 +1,5 @@
+import { githubHeaders } from './github.js';
+
 export const CHURN_MAX_FILES = 300;
 export const CHURN_MAX_COMMITS = 5;
 export interface ChurnFile { path: string; additions: number | null; deletions: number | null; changes: number | null }
@@ -17,7 +19,7 @@ export async function getFileChurn(options:ChurnOptions):Promise<ChurnResult>{
  if(!paths.length)return {available:true,files:[],caveat:null,commitsExamined:0};
  const request=options.fetch??globalThis.fetch, totals=new Map<string,{additions:number,deletions:number}>();let current=options.revision,examined=0,truncated=false;
  for(let i=0;i<CHURN_MAX_COMMITS&&current;i++){
-  let response:Response;try{response=await request(`https://api.github.com/repos/${encodeURIComponent(options.owner)}/${encodeURIComponent(options.repo)}/commits/${encodeURIComponent(current)}`,{headers:{Accept:'application/vnd.github+json','User-Agent':'CodeDarpan/1.0'},signal:AbortSignal.timeout(10000)})}catch{return unavailable(paths,'GitHub history request failed or timed out; churn was not inferred.',examined)}
+  let response:Response;try{response=await request(`https://api.github.com/repos/${encodeURIComponent(options.owner)}/${encodeURIComponent(options.repo)}/commits/${encodeURIComponent(current)}`,{headers:githubHeaders(),signal:AbortSignal.timeout(10000)})}catch{return unavailable(paths,'GitHub history request failed or timed out; churn was not inferred.',examined)}
   if(!response.ok)return unavailable(paths,response.status===403||response.status===429?'GitHub API rate limit or access restriction prevented churn retrieval; churn was not inferred.':`GitHub API returned HTTP ${response.status}; churn was not inferred.`,examined);
   let data:any;try{data=await response.json()}catch{return unavailable(paths,'GitHub API returned invalid JSON; churn was not inferred.',examined)}
   if(!data||!Array.isArray(data.files))return unavailable(paths,'GitHub did not provide complete per-file commit statistics; churn was not inferred.',examined);

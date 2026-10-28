@@ -55,6 +55,7 @@ Keep backup archives private and encrypted at rest. To restore, stop the service
 | `HOST_PORT` | `3000` | Host-side published port (Compose interpolation). |
 | `CODEDARPAN_RETENTION_DAYS` | `7` | Age in days after which stored analyses are removed at backend startup. |
 | `CODEDARPAN_REQUIRE_AUTH` | `true` in Compose | Require account bearer token for all analysis endpoints. |
+| `GITHUB_TOKEN` | unset | Optional least-privilege token for authenticated GitHub API requests; inject as a runtime secret and never commit it. |
 
 `CODEDARPAN_DB_PATH`, container `PORT`, and internal `BACKEND_PORT` are set by Compose to `/data/codedarpan.sqlite`, `3000`, and `3001`. Keep the database path under the mounted `/data` directory to preserve it across container recreation.
 

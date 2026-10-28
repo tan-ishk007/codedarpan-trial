@@ -19,6 +19,7 @@ type SearchHit = { nodeId: string; name: string; path: string; kind: string; lin
 type WorkspaceMode = 'explore' | 'diagnose' | 'onboard' | 'impact';
 type MobilePane = 'files' | 'atlas' | 'details';
 type RelationKind = 'imports' | 'calls' | 'other';
+type GraphFilters = { language: string; kind: string; directory: string; complexity: string };
 const LARGE_GRAPH_NOTICE_THRESHOLD = 250;
 
 function isWorkspaceMode(value: string | null | undefined): value is WorkspaceMode {
@@ -49,7 +50,7 @@ function normalizeGraph(payload: unknown): { nodes: GraphNode[]; edges: GraphEdg
     if (!id) return [];
     const path = text(value.path) ?? text(value.name) ?? id;
     const name = text(value.name) ?? path.split('/').pop() ?? id;
-    return [{ id, path, name, kind: text(value.kind) ?? text(value.type) ?? 'node', loc: num(value.loc) }];
+    return [{ id, path, name, kind: text(value.kind) ?? text(value.type) ?? 'node', language: text(value.language), complexity: num(value.complexity), loc: num(value.loc) }];
   });
   const nodeIds = new Set(nodes.map((node) => node.id));
   const edges: GraphEdge[] = graph.edges.flatMap((entry, index) => {
@@ -139,6 +140,7 @@ export default function WorkspacePage() {
   const [focusKey, setFocusKey] = useState(0);
   const [fileFilter, setFileFilter] = useState('');
   const [relationFilters, setRelationFilters] = useState<Record<RelationKind, boolean>>({ imports: true, calls: true, other: true });
+  const [graphFilters, setGraphFilters] = useState<GraphFilters>({ language: 'all', kind: 'all', directory: 'all', complexity: 'all' });
   const [snapshot, setSnapshot] = useState<RecordValue | null>(null);
   const snapshotRef = useRef<RecordValue | null>(null);
   const [eventRefreshTick, setEventRefreshTick] = useState(0);
@@ -493,8 +495,25 @@ export default function WorkspacePage() {
 
   const displayNodes = useMemo(() => {
     const query = fileFilter.trim().toLowerCase();
-    return query ? nodes.filter((node) => `${node.name} ${node.path}`.toLowerCase().includes(query)) : nodes;
-  }, [nodes, fileFilter]);
+    return nodes.filter((node) => {
+      if (query && !`${node.name} ${node.path}`.toLowerCase().includes(query)) return false;
+      if (graphFilters.language !== 'all' && (node.language ?? 'unknown') !== graphFilters.language) return false;
+      if (graphFilters.kind !== 'all' && node.kind !== graphFilters.kind) return false;
+      if (graphFilters.directory !== 'all' && (node.path.split('/')[0] || 'root') !== graphFilters.directory) return false;
+      if (graphFilters.complexity !== 'all') {
+        const complexity = node.complexity ?? 0;
+        if (graphFilters.complexity === 'low' && complexity > 5) return false;
+        if (graphFilters.complexity === 'medium' && (complexity < 6 || complexity > 10)) return false;
+        if (graphFilters.complexity === 'high' && complexity < 11) return false;
+      }
+      return true;
+    });
+  }, [nodes, fileFilter, graphFilters]);
+  const graphFilterOptions = useMemo(() => ({
+    languages: [...new Set(nodes.map((node) => node.language).filter((value): value is string => !!value))].sort(),
+    kinds: [...new Set(nodes.map((node) => node.kind))].sort(),
+    directories: [...new Set(nodes.map((node) => node.path.split('/')[0] || 'root'))].sort(),
+  }), [nodes]);
   const visibleEdges = useMemo(() => edges.filter((edge) => relationFilters[edge.kind as RelationKind] ?? true), [edges, relationFilters]);
   const activeNode = displayNodes.find((node) => node.id === selectedId) ?? null;
   const demoSource = demoMode && selectedId ? demoSources[selectedId] : undefined;
@@ -619,6 +638,13 @@ export default function WorkspacePage() {
               <button type="button" className="icon-button" aria-label="Fit graph to view" title="Fit graph to view" onClick={() => setFitKey((key) => key + 1)}><Maximize2 size={15} /></button>
               <button type="button" className="icon-button" aria-label="Reset graph layout" title="Reset graph layout" onClick={() => setResetKey((key) => key + 1)}><RotateCcw size={15} /></button>
             </div></div>
+            <div className="atlas-filter-row" aria-label="Graph filters">
+              <label>Language <select value={graphFilters.language} onChange={(event) => setGraphFilters((current) => ({ ...current, language: event.target.value }))}><option value="all">All</option>{graphFilterOptions.languages.map((language) => <option key={language} value={language}>{language}</option>)}</select></label>
+              <label>Kind <select value={graphFilters.kind} onChange={(event) => setGraphFilters((current) => ({ ...current, kind: event.target.value }))}><option value="all">All</option>{graphFilterOptions.kinds.map((kind) => <option key={kind} value={kind}>{kind}</option>)}</select></label>
+              <label>Directory <select value={graphFilters.directory} onChange={(event) => setGraphFilters((current) => ({ ...current, directory: event.target.value }))}><option value="all">All</option>{graphFilterOptions.directories.map((directory) => <option key={directory} value={directory}>{directory}</option>)}</select></label>
+              <label>Complexity <select value={graphFilters.complexity} onChange={(event) => setGraphFilters((current) => ({ ...current, complexity: event.target.value }))}><option value="all">All</option><option value="low">1–5</option><option value="medium">6–10</option><option value="high">11+</option></select></label>
+              <button type="button" className="clear-graph-filters" onClick={() => setGraphFilters({ language: 'all', kind: 'all', directory: 'all', complexity: 'all' })}>Clear filters</button>
+            </div>
             <div className="atlas-stage">
               {graphLoading && <div className="atlas-loading"><LoaderCircle size={20} className="spin" /><span>Waiting for returned graph data…</span></div>}
               {!graphLoading && displayNodes.length > 0 ? <AtlasGraph nodes={displayNodes} edges={visibleEdges} selectedId={selectedId} highlightedIds={highlightIds} onSelect={(id) => { setSelectedId(id); setMobilePane('details'); }} depth={depth} fitKey={fitKey} resetKey={resetKey} focusId={focusId} focusKey={focusKey} /> : !graphLoading && <div className="atlas-empty-state"><img src="/manus-storage/empty-atlas_9ba00091.webp" alt="An empty technical map awaiting returned repository relationships." /><h2>{demoMode ? 'Sample atlas is being prepared' : 'No returned graph to draw'}</h2><p>{demoMode ? 'This illustrative atlas appears after you choose Explore sample atlas.' : 'The graph appears only when a compatible analyzer returns usable nodes and edges.'}</p><a href="/">Return to repository intake <ArrowUpRight size={14} /></a></div>}

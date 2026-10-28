@@ -6,6 +6,8 @@ export type GraphNode = {
   name: string;
   path: string;
   kind: string;
+  language?: string;
+  complexity?: number;
   loc?: number;
 };
 

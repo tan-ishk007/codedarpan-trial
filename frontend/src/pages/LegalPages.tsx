@@ -47,7 +47,7 @@ export function PrivacyPage() {
           CodeDarpan is being built as a browser frontend for exploring repository structure. Its documented interface can accept a GitHub repository URL and optional ref, or a ZIP file, for a live submission. It also offers a separately and explicitly selected sample atlas; that sample is local illustrative data, not the result of analyzing a submitted repository.
         </p>
         <p>
-          The analyzer backend is not included in this frontend. A compatible backend is required for live analysis. The frontend plan specifies same-origin requests to documented analysis API routes, but that does not establish how a deployed service will receive, process, or otherwise handle submitted information.
+          The current deployment includes a same-origin analyzer service for public GitHub repositories and ZIP uploads. This draft still does not establish how the operator, hosting provider, logs, backups, or other service components receive, process, store, retain, or delete submitted information.
         </p>
       </section>
 
@@ -91,7 +91,7 @@ export function TermsPage() {
       <section className="legal-page__section" aria-labelledby="terms-draft">
         <h2 id="terms-draft">Draft status and scope</h2>
         <p>
-          This page is a review draft for a frontend-only product. It is not a final contract and does not establish an operator, governing law, jurisdiction, dispute process, or legal guarantee. Those matters remain unresolved. Qualified professional review is required before launch.
+          This page is a review draft for a deployed analyzer and browser workspace. It is not a final contract and does not establish an operator, governing law, jurisdiction, dispute process, or legal guarantee. Those matters remain unresolved. Qualified professional review is required before public launch.
         </p>
       </section>
 
@@ -101,7 +101,7 @@ export function TermsPage() {
           The documented frontend provides an entry point for a GitHub repository URL with an optional ref, a ZIP upload/drop interaction, and an explicitly chosen sample atlas. In a live workspace, the interface is intended to present information returned by a compatible analyzer service. It should report unavailable, partial, or failed service states rather than inventing analysis or silently substituting sample results.
         </p>
         <p>
-          The analyzer backend is not included. Live submissions and analysis features require a compatible backend implementing the documented API. The sample atlas is illustrative demo data, not an analysis of a user's repository and not evidence about how a live service will operate.
+          The deployment currently includes the analyzer service implementing the documented API for public repositories and ZIP archives. The sample atlas remains illustrative demo data, not an analysis of a user's repository and not evidence about how live service data is handled.
         </p>
       </section>
 
